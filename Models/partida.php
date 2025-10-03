@@ -157,6 +157,13 @@ class Partida
         }
     }
 
+    public function rendirse(){
+        if ($this->estado != 'en curso') {
+            throw new Exception("Error la partida ya ha finalizado");
+        }
+        $this->estado = 'rendid@';
+    }
+
 
     /**
      * Get the value of id
