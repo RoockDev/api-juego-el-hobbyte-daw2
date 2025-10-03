@@ -65,6 +65,25 @@ class Partida{
         $this->contador_fallos_seguidos = 0;
 
     }
+
+    public function destaparCasilla($posicion){
+        $posicion = $posicion -1;
+        if ($this->estado != "en curso") {
+            throw new Exception("La partida ya ha finalizado");
+            
+        }
+
+        if ($posicion < 0 || $posicion > 19) {
+            throw new Exception("Posicion no valida, la posicion debe estar entre 1 y 20");
+            
+        }
+
+        if ($this->tablero[$posicion]['destapada']) {
+            throw new Exception("La casilla ya ha sido destapada");
+            
+        }
+
+    }
     
 
     /**
