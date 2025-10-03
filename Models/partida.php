@@ -53,6 +53,15 @@ class Partida{
         'Bilbo' => 50
        ];
     }
+
+    public function iniciarPartida(){
+        $this->tablero = $this->generarTablero();
+        $this->heroes = $this->inicializarHeroes();
+        $this->estado = "en curso";
+        $this->contador_casillas_destapadas = 0;
+        $this->contador_fallos_seguidos = 0;
+
+    }
     
 
     /**
