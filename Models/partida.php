@@ -77,7 +77,7 @@ class Partida
         if ($numCasillas < 10 || $numCasillas > 100) {
             throw new Exception("el tablero solo puede tener entre 10 y 100 casillas"); 
         }
-        
+
         $this->tablero = $this->generarTablero($numCasillas);
         $this->heroes = $this->inicializarHeroes();
         $this->estado = "en curso";
@@ -177,6 +177,18 @@ class Partida
             throw new Exception("Error la partida ya ha finalizado");
         }
         $this->estado = 'rendid@';
+    }
+
+    public function obtenerEstadoParaJugador(){
+        return [
+            'id' => $this->id,
+            'usuario_id' => $this->usuario_id,
+            'estado' => $this->estado,
+            'tablero' => $this->tablero,
+            'heroes' => $this->heroes,
+            'contador_casillas_destapdas' => $this->contador_casillas_destapadas,
+            'contador_fallos_seguidos' => $this->contador_fallos_seguidos, 
+        ];
     }
 
 
