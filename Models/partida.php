@@ -39,8 +39,11 @@ class Partida{
         }
 
         $tablero[] = [
-            'tipo' => $tipo,
-            'esfuerzo' => $esfuerzo
+            'prueba' => [
+                'tipo' => $tipo,
+                'esfuerzo' => $esfuerzo
+            ],
+            'destapada' => false
         ];
 
         return $tablero;
