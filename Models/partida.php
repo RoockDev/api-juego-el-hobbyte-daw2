@@ -46,6 +46,13 @@ class Partida{
         return $tablero;
     }
 
+    private function inicializarHeroes(){
+       return [
+        'Gandalf' => 50,
+        'Thorin' => 50,
+        'Bilbo' => 50
+       ];
+    }
     
 
     /**
