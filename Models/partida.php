@@ -21,12 +21,12 @@ class Partida
         $this->contador_fallos_seguidos = $contador_fallos_seguidos;
     }
 
-    private function generarTablero()
+    private function generarTablero($numCasillas = 20)
     {
         $tipos = ['magia', 'fuerza', 'habilidad'];
         $tablero = [];
 
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < $numCasillas; $i++) {
             $tipo = $tipos[array_rand($tipos)];
         }
 
@@ -52,6 +52,8 @@ class Partida
         return $tablero;
     }
 
+    
+
     private function inicializarHeroes()
     {
         return [
@@ -64,6 +66,19 @@ class Partida
     public function iniciarPartida()
     {
         $this->tablero = $this->generarTablero();
+        $this->heroes = $this->inicializarHeroes();
+        $this->estado = "en curso";
+        $this->contador_casillas_destapadas = 0;
+        $this->contador_fallos_seguidos = 0;
+    }
+
+     public function iniciarPartidaPersonalizada($numCasillas)
+    {
+        if ($numCasillas < 10 || $numCasillas > 100) {
+            throw new Exception("el tablero solo puede tener entre 10 y 100 casillas"); 
+        }
+        
+        $this->tablero = $this->generarTablero($numCasillas);
         $this->heroes = $this->inicializarHeroes();
         $this->estado = "en curso";
         $this->contador_casillas_destapadas = 0;
