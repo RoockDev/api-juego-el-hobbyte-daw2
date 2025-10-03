@@ -20,6 +20,31 @@ class Partida{
         $this->contador_fallos_seguidos = $contador_fallos_seguidos;
     }
 
+    private function generarTablero(){
+        $tipos = ['magia','fuerza','habilidad'];
+        $tablero = [];
+
+        for ($i=0; $i < 20 ; $i++) { 
+            $tipo = $tipos[array_rand($tipos)];
+        }
+
+        $rand = mt_rand(1,100);
+
+        if ($rand <= 65) {
+            $esfuerzo = [5,10,15,20][array_rand([5,10,15,20])];
+        }elseif ($rand <=95) {
+            $esfuerzo = [25,30,35,40][array_rand([25,30,35,40])];
+        }else{
+            $esfuerzo = [45,50][array_rand([45,50])];
+        }
+
+        $tablero[] = [
+            'tipo' => $tipo,
+            'esfuerzo' => $esfuerzo
+        ];
+
+        return $tablero;
+    }
 
     
 
