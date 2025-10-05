@@ -18,14 +18,16 @@ class UsuarioController
         if ($this->usuarioAutenticado === null) {
             http_response_code(401);
             echo json_encode(['error' => 'Usuario no autenticado']);
-            return;
+            return false;
         }
 
         if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
             http_response_code(403);
             echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
-            return;
+            return false;
         }
+
+        return true;
     }
     //Get /admin/users 
     //obtener todos los usuarios (solo disponible para los administradores)
@@ -33,7 +35,9 @@ class UsuarioController
     {
 
 
-        $this->verify();
+        if(!$this->verify()){
+            return;
+        }
 
         try {
             $usuarios = UsuarioDAO::getAllUsers();
@@ -69,7 +73,9 @@ class UsuarioController
 
     public function getUserById($id)
     {
-        $this->verify();
+        if(!$this->verify()){
+            return;
+        }
 
         try {
 
@@ -99,7 +105,9 @@ class UsuarioController
     //Crear un nuevo usuario (solo disponible para los administradores)
     public function createUser()
     {
-        $this->verify();
+        if(!$this->verify()){
+            return;
+        }
 
         $datos = json_decode(file_get_contents('php://input'), true);
 
@@ -165,7 +173,9 @@ class UsuarioController
     public function updateUser($id)
     {
 
-        $this->verify();
+        if(!$this->verify()){
+            return;
+        }
 
         $datos = json_decode(file_get_contents('php://input'), true);
         try {
@@ -239,7 +249,9 @@ class UsuarioController
     public function delete($id)
     {
 
-        $this->verify();
+        if(!$this->verify()){
+            return;
+        }
 
         try {
             if (UsuarioDAO::getUserById($id) === null) {
