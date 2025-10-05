@@ -262,6 +262,48 @@ class UsuarioController
 
     }
 
+    //Delete /admin/users/id
+    // Elimina un usuario (solo disponible para los administradores)
+    public function delete($id){
+
+        if ($this->usuarioAutenticado === null) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Usuario no autenticado']);
+            return;
+        }
+
+        if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
+            return;
+        }
+
+        try {
+            if (UsuarioDAO::getUserById($id) === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'El usuario que quieres borrar no existe']);
+                return;
+            }
+
+            $exito = usuarioDAO::deleteUser($id);
+
+            if ($exito) {
+                http_response_code(200);
+                echo json_encode([
+                    'mensaje' => 'usuario eliminado correctamente']);
+            }else{
+                http_response_code(500);
+                echo json_encode(['error' => 'no se pudo eliminar el usuario']);
+            }
+
+        
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'el usuario no ha podido eliminarse correctamente']);
+        }
+
+    }
+
 
 
 
