@@ -13,12 +13,8 @@ class UsuarioController
         $this->usuarioAutenticado = $usuarioAutenticado;
     }
 
-    //Get /admin/users 
-    //obtener todos los usuarios (solo disponible para los administradores)
-    public function getAllUsers()
+    private function verify()
     {
-       
-        
         if ($this->usuarioAutenticado === null) {
             http_response_code(401);
             echo json_encode(['error' => 'Usuario no autenticado']);
@@ -30,6 +26,14 @@ class UsuarioController
             echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
             return;
         }
+    }
+    //Get /admin/users 
+    //obtener todos los usuarios (solo disponible para los administradores)
+    public function getAllUsers()
+    {
+
+
+        $this->verify();
 
         try {
             $usuarios = UsuarioDAO::getAllUsers();
@@ -62,27 +66,18 @@ class UsuarioController
 
     //Get /admin/users/id
     //Obtener un usuario por Id (solo disponible para los administradores)
-    
-    public function getUserById($id){
-        if ($this->usuarioAutenticado === null) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Usuario no autenticado']);
-            return;
-        }
 
-        if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
-            return;
-        }
+    public function getUserById($id)
+    {
+        $this->verify();
 
         try {
-    
+
             $usuario = UsuarioDAO::getUserById($id);
 
             if ($usuario === null) {
                 http_response_code(404);
-                echo json_encode(['error' => 'usuario no encontrado' ]);
+                echo json_encode(['error' => 'usuario no encontrado']);
                 return;
             }
             $usuarioProtegido = [
@@ -94,107 +89,87 @@ class UsuarioController
             ];
             http_response_code(200);
             echo json_encode($usuarioProtegido);
-
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'error al obtener el usuario '.$e->getMessage()]);
+            echo json_encode(['error' => 'error al obtener el usuario ' . $e->getMessage()]);
         }
     }
 
     //Post /admin/users
     //Crear un nuevo usuario (solo disponible para los administradores)
-    public function createUser(){
-        if ($this->usuarioAutenticado === null) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Usuario no autenticado']);
-            return;
-        }
-
-        if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
-            return;
-        }
+    public function createUser()
+    {
+        $this->verify();
 
         $datos = json_decode(file_get_contents('php://input'), true);
 
         $camposObligatorios = ['dni', 'clave', 'email', 'nombre', 'rol_id'];
-    foreach ($camposObligatorios as $campo) {
-        if (!isset($datos[$campo]) || trim($datos[$campo]) === '') {
+        foreach ($camposObligatorios as $campo) {
+            if (!isset($datos[$campo]) || trim($datos[$campo]) === '') {
+                http_response_code(400);
+                echo json_encode(['error' => "El campo '$campo' es obligatorio y no puede estar vacío"]);
+                return;
+            }
+        }
+
+        $dni = trim($datos['dni']);
+        $clave = $datos['clave'];
+        $email = trim($datos['email']);
+        $nombre = trim($datos['nombre']);
+        $rol_id = (int)$datos['rol_id'];
+
+        if ($rol_id !== 1 && $rol_id !== 2) {
             http_response_code(400);
-            echo json_encode(['error' => "El campo '$campo' es obligatorio y no puede estar vacío"]);
-            return;
-        }
-    }
-
-    $dni = trim($datos['dni']);
-    $clave = $datos['clave']; 
-    $email = trim($datos['email']);
-    $nombre = trim($datos['nombre']);
-    $rol_id = (int)$datos['rol_id'];
-
-    if ($rol_id !== 1 && $rol_id !== 2) {
-        http_response_code(400);
-        echo json_encode(['error' => 'El rol_id debe ser 1 (admin) o 2 (gamer)']);
-        return;
-    }
-
-    try {
-        if (UsuarioDAO::getUserByDni($dni) !== null) {
-            http_response_code(409);
-            echo json_encode(['error' => 'ese dni ya esta registrado']);
+            echo json_encode(['error' => 'El rol_id debe ser 1 (admin) o 2 (gamer)']);
             return;
         }
 
-        if (usuarioDAO::getUserByEmail($email) !== null) {
-            http_response_code(409);
-            echo json_encode(['error' => 'ese email ya esta registrado']);
-            return;
+        try {
+            if (UsuarioDAO::getUserByDni($dni) !== null) {
+                http_response_code(409);
+                echo json_encode(['error' => 'ese dni ya esta registrado']);
+                return;
+            }
+
+            if (usuarioDAO::getUserByEmail($email) !== null) {
+                http_response_code(409);
+                echo json_encode(['error' => 'ese email ya esta registrado']);
+                return;
+            }
+
+
+            $nuevoUsuario = new Usuario();
+            $nuevoUsuario->setDni($dni);
+            $nuevoUsuario->setClave($clave);
+            $nuevoUsuario->setEmail($email);
+            $nuevoUsuario->setNombre($nombre);
+            $nuevoUsuario->setRolId($rol_id);
+
+            $exito = usuarioDAO::createUser($nuevoUsuario);
+
+            echo json_encode([
+                'mensaje' => 'Usuario Creado Correctamente',
+                'id' => $nuevoUsuario->getId(),
+                'nombre' => $nuevoUsuario->getNombre(),
+                'email' => $nuevoUsuario->getEmail(),
+                'rol' => $nuevoUsuario->getRolNombre()
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al crear usuario']);
         }
-
-
-        $nuevoUsuario = new Usuario();
-        $nuevoUsuario->setDni($dni);
-        $nuevoUsuario->setClave($clave);
-        $nuevoUsuario->setEmail($email);
-        $nuevoUsuario->setNombre($nombre);
-        $nuevoUsuario->setRolId($rol_id);
-
-        $exito = usuarioDAO::createUser($nuevoUsuario);
-
-        echo json_encode([
-            'mensaje' => 'Usuario Creado Correctamente',
-            'id' => $nuevoUsuario->getId(),
-            'nombre' => $nuevoUsuario->getNombre(),
-            'email' => $nuevoUsuario->getEmail(),
-            'rol' =>$nuevoUsuario->getRolNombre()
-        ]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'error al crear usuario']);
-    }
-
     }
 
     //Put /admin/users/id
     // actualizar usuario existente(solo disponible para administradores)
-    public function updateUser($id){
+    public function updateUser($id)
+    {
 
-        if ($this->usuarioAutenticado === null) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Usuario no autenticado']);
-            return;
-        }
+        $this->verify();
 
-        if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
-            return;
-        }
-
-        $datos = json_decode(file_get_contents('php://input'),true);
+        $datos = json_decode(file_get_contents('php://input'), true);
         try {
-            
+
             //cogemos el usuario actual para hacer validacion (existe y comparar dni y correo)
             $usuarioActual = UsuarioDAO::getUserById($id);
             if ($usuarioActual === null) {
@@ -205,7 +180,7 @@ class UsuarioController
             //si no se introduce alguno de estos datos para updatear se queda el suyo
             $nuevoDni = isset($datos['dni']) ? trim($datos['dni']) : $usuarioActual->getDni();
             $nuevoEmail = isset($datos['email']) ? trim($datos['email']) : $usuarioActual->getEmail();
-            $nuevoNombre = isset($datos['nombre']) ? trim($datos['nombre']): $usuarioActual->getNombre();
+            $nuevoNombre = isset($datos['nombre']) ? trim($datos['nombre']) : $usuarioActual->getNombre();
             $nuevaClave = isset($datos['clave']) ? trim($datos['nombre']) : $usuarioActual->getClave();
             $nuevoRolId = isset($datos['rol_id']) ?  trim($datos['rol_id']) : $usuarioActual->getRolId();
 
@@ -257,26 +232,14 @@ class UsuarioController
             http_response_code(500);
             echo json_encode(['error' => 'error al actualizar el usuario']);
         }
-
-
-
     }
 
     //Delete /admin/users/id
     // Elimina un usuario (solo disponible para los administradores)
-    public function delete($id){
+    public function delete($id)
+    {
 
-        if ($this->usuarioAutenticado === null) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Usuario no autenticado']);
-            return;
-        }
-
-        if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
-            return;
-        }
+        $this->verify();
 
         try {
             if (UsuarioDAO::getUserById($id) === null) {
@@ -290,23 +253,15 @@ class UsuarioController
             if ($exito) {
                 http_response_code(200);
                 echo json_encode([
-                    'mensaje' => 'usuario eliminado correctamente']);
-            }else{
+                    'mensaje' => 'usuario eliminado correctamente'
+                ]);
+            } else {
                 http_response_code(500);
                 echo json_encode(['error' => 'no se pudo eliminar el usuario']);
             }
-
-        
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'el usuario no ha podido eliminarse correctamente']);
         }
-
     }
-
-
-
-
-
-
 }
