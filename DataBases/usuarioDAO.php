@@ -67,6 +67,38 @@ class usuarioDAO
             $conexion->close();
         }
     }
+     public static function getUserByEmail($email)
+    {
+        try {
+            $conexion = Database::connect();
+            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,r.nombre as rol_nombre
+            FROM usuarios u
+            JOIN roles r ON u.rol_id = r.id
+            WHERE u.email = ? ";
+            $stmt = $conexion->prepare($query);
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $resultado = $stmt->get_result();
+            $usuario = null;
+            if ($fila = $resultado->fetch_assoc()) {
+
+                $usuario = new Usuario();
+                $usuario->setId($fila['id']);
+                $usuario->setDni($fila['dni']);
+                $usuario->setClave($fila['clave']);
+                $usuario->setEmail($fila['email']);
+                $usuario->setNombre($fila['nombre']);
+                $usuario->setRolNombre($fila['rol_nombre']);
+            }
+
+            $stmt->close();
+            return $usuario;
+        } catch (Exception $e) {
+            throw new Exception("Error al buscar usuario" . $e->getMessage());
+        } finally {
+            $conexion->close();
+        }
+    }
 
     public static function getUserById($id)
     {
