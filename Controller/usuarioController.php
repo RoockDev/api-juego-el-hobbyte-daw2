@@ -175,4 +175,96 @@ class UsuarioController
     }
 
     }
+
+    //Put /admin/users/id
+    // actualizar usuario existente(solo disponible para administradores)
+    public function updateUser($id){
+
+        if ($this->usuarioAutenticado === null) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Usuario no autenticado']);
+            return;
+        }
+
+        if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Acceso Denegado, solo los administradores pueden ver esta información']);
+            return;
+        }
+
+        $datos = json_decode(file_get_contents('php://input'),true);
+        try {
+            
+            //cogemos el usuario actual para hacer validacion (existe y comparar dni y correo)
+            $usuarioActual = UsuarioDAO::getUserById($id);
+            if ($usuarioActual === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'usuario no encontrado']);
+                return;
+            }
+            //si no se introduce alguno de estos datos para updatear se queda el suyo
+            $nuevoDni = isset($datos['dni']) ? trim($datos['dni']) : $usuarioActual->getDni();
+            $nuevoEmail = isset($datos['email']) ? trim($datos['email']) : $usuarioActual->getEmail();
+            $nuevoNombre = isset($datos['nombre']) ? trim($datos['nombre']): $usuarioActual->getNombre();
+            $nuevaClave = isset($datos['clave']) ? trim($datos['nombre']) : $usuarioActual->getClave();
+            $nuevoRolId = isset($datos['rol_id']) ?  trim($datos['rol_id']) : $usuarioActual->getRolId();
+
+            if ($nuevoRolId !== 1 || $nuevoRolId !== 2) {
+                http_response_code(400);
+                echo json_encode(['error' => 'el rol_id solo puede ser 1 admin o 2 gamer']);
+                return;
+            }
+
+            if ($nuevoDni !== $usuarioActual->getDni()) {
+                if (usuarioDAO::getUserByDni($nuevoDni) !== null) {
+                    http_response_code(409);
+                    echo json_encode(['error' => 'el dni ya esta registrado']);
+                    return;
+                }
+            }
+
+            if ($nuevoEmail !== $usuarioActual->getEmail()) {
+                if (usuarioDAO::getUserByEmail($nuevoEmail) !== null) {
+                    http_response_code(409);
+                    echo json_encode(['error' => 'el email ya esta registrado']);
+                    return;
+                }
+            }
+
+            /**
+             * se que este bloque de aqui debajo no es eficiente por que 
+             * en caso de que alguna variable no se haya cambiado por x o por y
+             * seria la misma que tenia y aqui la estariamos cambiando a la misma que tiene ya,
+             * ahora mismo no se me ocurre otra cosa mejor, se intentará mejorar
+             * 
+             */
+            $usuarioActual->setDni($nuevoDni);
+            $usuarioActual->setEmail($nuevoEmail);
+            $usuarioActual->setNombre($nuevoNombre);
+            $usuarioActual->setClave($nuevaClave);
+            $usuarioActual->setRolId($nuevoRolId);
+
+            $exito = usuarioDAO::updateById($usuarioActual);
+
+            http_response_code(200);
+            echo json_encode([
+                'mensaje' => 'usuario updateado correctamente',
+                'id' => $usuarioActual->getId(),
+                'dni' => $usuarioActual->getDni(),
+                'nombre' => $usuarioActual->getNombre()
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al actualizar el usuario']);
+        }
+
+
+
+    }
+
+
+
+
+
+
 }
