@@ -15,11 +15,7 @@ class UsuarioController
 
     private function verify()
     {
-        if ($this->usuarioAutenticado === null) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Usuario no autenticado']);
-            return false;
-        }
+       
 
         if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
             http_response_code(403);
@@ -276,4 +272,37 @@ class UsuarioController
             echo json_encode(['error' => 'el usuario no ha podido eliminarse correctamente']);
         }
     }
+
+    
+    /**
+     * ahora vamos con los metodos correspondientes al usuario general tanto admin como gamer
+     * por lo tanto en los siguientes metodos no hara falta llamar a verify
+     */
+    //Get /user/me 
+    // obtener los datos personales del usuario autenticado (disponible para todos los usuarios)
+    
+    public function getMe(){
+        try {
+            http_response_code(200);
+            echo json_encode([
+                'id' => $this->usuarioAutenticado->getId(),
+                'nombre' => $this->usuarioAutenticado->getNombre(),
+                'dni' => $this->usuarioAutenticado->getDni(),
+                'email' => $this->usuarioAutenticado->getEmail(),
+                'rol' => $this->usuarioAutenticado->getRolNombre()
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error interno del servidor no puedes acceder a tus datos']);
+        }
+        
+    }
+
+    
+
+
+
+
+
+
 }
