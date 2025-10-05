@@ -176,7 +176,7 @@ class Partida
         if ($this->estado != 'en curso') {
             throw new Exception("Error la partida ya ha finalizado");
         }
-        $this->estado = 'rendid@';
+        $this->estado = 'rendido';
     }
 
     public function obtenerEstadoParaJugador(){
