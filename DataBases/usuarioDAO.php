@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/database.php';
 
-class usuarioDAO
+class UsuarioDAO
 {
     private $conexion;
 

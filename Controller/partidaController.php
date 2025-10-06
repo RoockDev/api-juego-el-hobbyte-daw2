@@ -158,7 +158,7 @@ class PartidaController
 
             $titlePositiion = (int)$tilePosition;
 
-            $partida = partidaDAO::getPartidaById($gameId);
+            $partida = PartidaDAO::getPartidaById($gameId);
             if ($partida === null) {
                 http_response_code(404);
                 echo json_encode(['error' => 'partida no encontrada']);
@@ -178,7 +178,7 @@ class PartidaController
             }
 
             $partida->destaparCasilla($titlePositiion);
-            $exito = partidaDAO::updatePartida($partida);
+            $exito = PartidaDAO::updatePartida($partida);
 
             http_response_code(200);
             echo json_encode([
@@ -201,7 +201,7 @@ class PartidaController
 
     public function surrender($gameId){
         try {
-            $partida = partidaDAO::getPartidaById($gameId);
+            $partida = PartidaDAO::getPartidaById($gameId);
             if ($partida === null) {
                 http_response_code(404);
                 echo json_encode(['error' => 'partida no encontrada']);
@@ -222,7 +222,7 @@ class PartidaController
 
             $partida->rendirse();
 
-            $exito = partidaDAO::updatePartida($partida);
+            $exito = PartidaDAO::updatePartida($partida);
 
             http_response_code(200);
             echo json_encode([

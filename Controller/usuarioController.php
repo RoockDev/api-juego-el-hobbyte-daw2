@@ -137,7 +137,7 @@ class UsuarioController
                 return;
             }
 
-            if (usuarioDAO::getUserByEmail($email) !== null) {
+            if (UsuarioDAO::getUserByEmail($email) !== null) {
                 http_response_code(409);
                 echo json_encode(['error' => 'ese email ya esta registrado']);
                 return;
@@ -151,7 +151,7 @@ class UsuarioController
             $nuevoUsuario->setNombre($nombre);
             $nuevoUsuario->setRolId($rol_id);
 
-            $exito = usuarioDAO::createUser($nuevoUsuario);
+            $exito = UsuarioDAO::createUser($nuevoUsuario);
 
             echo json_encode([
                 'mensaje' => 'Usuario Creado Correctamente',
@@ -199,7 +199,7 @@ class UsuarioController
             }
 
             if ($nuevoDni !== $usuarioActual->getDni()) {
-                if (usuarioDAO::getUserByDni($nuevoDni) !== null) {
+                if (UsuarioDAO::getUserByDni($nuevoDni) !== null) {
                     http_response_code(409);
                     echo json_encode(['error' => 'el dni ya esta registrado']);
                     return;
@@ -207,7 +207,7 @@ class UsuarioController
             }
 
             if ($nuevoEmail !== $usuarioActual->getEmail()) {
-                if (usuarioDAO::getUserByEmail($nuevoEmail) !== null) {
+                if (UsuarioDAO::getUserByEmail($nuevoEmail) !== null) {
                     http_response_code(409);
                     echo json_encode(['error' => 'el email ya esta registrado']);
                     return;
@@ -227,7 +227,7 @@ class UsuarioController
             $usuarioActual->setClave($nuevaClave);
             $usuarioActual->setRolId($nuevoRolId);
 
-            $exito = usuarioDAO::updateById($usuarioActual);
+            $exito = UsuarioDAO::updateById($usuarioActual);
 
             http_response_code(200);
             echo json_encode([
@@ -258,7 +258,7 @@ class UsuarioController
                 return;
             }
 
-            $exito = usuarioDAO::deleteUser($id);
+            $exito = UsuarioDAO::deleteUser($id);
 
             if ($exito) {
                 http_response_code(200);
@@ -350,7 +350,7 @@ class UsuarioController
 
         $email = trim($datos['email']);
 
-        $usuario = usuarioDAO::getUserByEmail($email);
+        $usuario = UsuarioDAO::getUserByEmail($email);
         if ($usuario !== null) {
             
             $caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -361,7 +361,7 @@ class UsuarioController
             
             
             $usuario->setClave($contrasenaNueva);
-            usuarioDAO::updateById($usuario);
+            UsuarioDAO::updateById($usuario);
             
             
             enviarCorreoRecuperacion($email, $contrasenaNueva);
