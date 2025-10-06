@@ -298,7 +298,40 @@ class UsuarioController
         
     }
 
-    
+    //Get /user/statistics
+    //obtiener estadisticas del usuario autenticado
+    public function getStatistics(){
+        try {
+            $partidas = PartidaDAO::getPartidasByUsuarioId($this->usuarioAutenticado->getId());
+
+            $ganadas = 0;
+            $perdidas = 0;
+            $rendidas = 0;
+
+            foreach($partidas as $partida){
+                if ($partida->getEstado() === 'ganada') {
+                    $ganadas ++;
+                }else if($partida->getEstado() === 'perdida'){
+                    $perdidas++;
+                }else if($partida->getEstado() === 'rendido'){
+                    $rendidas++;
+                }
+            }
+
+            $total = $ganadas + $perdidas + $rendidas;
+            http_response_code(200);
+            echo json_encode([
+                'total partidas jugadas' => $total,
+                'partidas ganadas' => $ganadas,
+                'partidas perdidas' => $perdidas,
+                'partidas rendidas' => $rendidas
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al obtener las estadisticas del usuario']);
+        }
+    }
+
 
 
 
