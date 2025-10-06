@@ -195,4 +195,48 @@ class PartidaController
             echo json_encode(['error' => 'error de juego '.$e->getMessage()]);
         }
     }
+
+    //Post /gamer/games/gameId/surrender
+    // rendirse
+
+    public function surrender($gameId){
+        try {
+            $partida = partidaDAO::getPartidaById($gameId);
+            if ($partida === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'partida no encontrada']);
+                return;
+            }
+
+            if ($partida->getEstado() !== 'en curso') {
+                http_response_code(400);
+                echo json_encode(['error' => 'la partida ya ha finalizado']);
+                return;
+            }
+
+            if ($partida->getUsuarioId() !== $this->usuarioAutenticado->getId()) {
+                http_response_code(403);
+                echo json_encode(['error' => 'no tienes permisos necesarios para acceder a esta partida']);
+                return;
+            }
+
+            $partida->rendirse();
+
+            $exito = partidaDAO::updatePartida($partida);
+
+            http_response_code(200);
+            echo json_encode([
+                'id' => $partida->getId(),
+                'estado' => $partida->getEstado(),
+                'tablero' => $partida->getTablero(),
+                'heroes' => $partida->getHeroes(),
+                'contador_casillas_destapadas' => $partida->getContadorCasillasDestapadas(),
+                'contador_fallos_seguidos' => $partida->getContadorFallosSeguidos()
+
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al intentar rendirte '.$e->getMessage()]);
+        }
+    }
 }
