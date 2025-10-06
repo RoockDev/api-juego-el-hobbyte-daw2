@@ -143,4 +143,56 @@ class PartidaController
             echo json_encode(['error' => 'error al obtener el estado de la partida']);
         }
     }
+
+    //Post /gamer/games/gameId/tiles/tilePosition
+    // destapar una casilla
+
+    public function openTile($gameId,$tilePosition){
+        try {
+            
+            if (!is_numeric($tilePosition) || $tilePosition > 1) {
+                http_response_code(400);
+                echo json_encode(['error' => 'la posicion de la casilla tiene que ser un numero y mayor que 0']);
+                return;
+            }
+
+            $titlePositiion = (int)$tilePosition;
+
+            $partida = partidaDAO::getPartidaById($gameId);
+            if ($partida === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'partida no encontrada']);
+                return;
+            }
+
+            if ($partida->getUsuarioId() !== $this->usuarioAutenticado->getId()) {
+                http_response_code(403);
+                echo json_encode(['error' => 'no tienes los permisos necesarios para acceder a esta partida']);
+                return;
+            }
+
+            if ($partida->getEstado() !== 'en curso') {
+                http_response_code(400);
+                echo json_encode(['error' => 'la partida ya ha finalizado']);
+                return;
+            }
+
+            $partida->destaparCasilla($titlePositiion);
+            $exito = partidaDAO::updatePartida($partida);
+
+            http_response_code(200);
+            echo json_encode([
+                'id' => $partida->getId(),
+                'estado' => $partida->getEstado(),
+                'tablero' => $partida->getTablero(),
+                'heroes' => $partida->getHeroes(),
+                'contador_casillas_destapadas' => $partida->getContadorCasillasDestapadas(),
+                'contador_fallor_seguidos' => $partida->getContadorFallosSeguidos()
+            ]);
+
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error de juego '.$e->getMessage()]);
+        }
+    }
 }
