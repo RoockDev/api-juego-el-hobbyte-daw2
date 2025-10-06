@@ -16,7 +16,7 @@ class PartidaController
             $datos = json_decode(file_get_contents('php://input'), true);
             //in_array l oque hace es buscar el valor especifico de un array, aqui mira si en tipo hay tipo estandat o personalizada 
             if (!isset($datos['tipo']) || !in_array($datos['tipo'], ['estandar', 'personalizada'])) {
-                http_response_code(400);
+                http_response_code(404);
                 echo json_encode(['error' => 'el campo "tipo" es obligatorio y debe ser "estandar" o "personalizada" ']);
                 return;
             }
@@ -26,7 +26,7 @@ class PartidaController
 
             if ($tipo === 'personalizada') {
                 if (!isset($datos['numCasillas'])) {
-                    http_response_code(400);
+                    http_response_code(404);
                     echo json_encode(['error' => 'el numero de casillas es obligatorio, si no no seria una partida personalizada']);
                     return;
                 }
@@ -64,7 +64,7 @@ class PartidaController
                 $nuevaPartida->iniciarPartidaPersonalizada($num_casillas);
             }
 
-            $exito = partidaDAO::createPartida($nuevaPartida);
+            $exito = PartidaDAO::createPartida($nuevaPartida);
 
             http_response_code(201);
             echo json_encode([
@@ -86,7 +86,7 @@ class PartidaController
     // obtener todas las partidas abiertas del jugador
     public function getGames(){
         try {
-            $partidas = partidaDAO::getPartidasByUsuarioId($this->usuarioAutenticado->getId());
+            $partidas = PartidaDAO::getPartidasByUsuarioId($this->usuarioAutenticado->getId());
             $partidasAbiertas = [];
             foreach($partidas as $partida){
                 $partidasAbiertas[] = [
@@ -104,6 +104,43 @@ class PartidaController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'error al obtener la lista de partidas del usuario']);
+        }
+    }
+
+    //Get /gamer/games/gameId
+    //obtener el estado actual de la partida
+
+    public function getGameState($id){
+        try {
+           
+            $partida = PartidaDAO::getPartidaById($id);
+            if ($partida === null) {
+                http_response_code(404);
+                echo json_encode(['error' => 'esa id no corresponde con ninguna partida']);
+                return;
+            }
+
+            if ($partida->getUsuarioId() !== $this->usuarioAutenticado->getId()) {
+                http_response_code(404);
+                echo json_encode(['error' => 'ese id de partida no corresponde con ninguna de tus partidas']);
+                return;
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'id' => $partida->getId(),
+                'usuarioId' => $this->usuarioAutenticado->getId(),
+                'estado' => $partida->getEstado(),
+                'tablero' => $partida->getTablero(),
+                'heroes' => $partida->getHeroes(),
+                'contador_casillas_destapadas' => $partida->getContadorCasillasDestapadas(),
+                'contador_fallos_seguidos' => $partida->getContadorFallosSeguidos()
+            ]);
+
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al obtener el estado de la partida']);
         }
     }
 }
