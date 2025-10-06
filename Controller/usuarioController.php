@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../Models/Usuario.php';
 require_once __DIR__ . '/../DataBase/UsuarioDAO.php';
+require_once __DIR__ . '/../DataBase/PartidaDAO.php';
+require_once __DIR__ . '/../config/mail.php';
 
 class UsuarioController
 {
@@ -187,10 +189,10 @@ class UsuarioController
             $nuevoDni = isset($datos['dni']) ? trim($datos['dni']) : $usuarioActual->getDni();
             $nuevoEmail = isset($datos['email']) ? trim($datos['email']) : $usuarioActual->getEmail();
             $nuevoNombre = isset($datos['nombre']) ? trim($datos['nombre']) : $usuarioActual->getNombre();
-            $nuevaClave = isset($datos['clave']) ? trim($datos['nombre']) : $usuarioActual->getClave();
-            $nuevoRolId = isset($datos['rol_id']) ?  trim($datos['rol_id']) : $usuarioActual->getRolId();
+            $nuevaClave = isset($datos['clave']) ? trim($datos['clave']) : $usuarioActual->getClave();
+            $nuevoRolId = isset($datos['rol_id']) ? (int)trim($datos['rol_id']) : $usuarioActual->getRolId();
 
-            if ($nuevoRolId !== 1 || $nuevoRolId !== 2) {
+            if ($nuevoRolId !== 1 && $nuevoRolId !== 2) {
                 http_response_code(400);
                 echo json_encode(['error' => 'el rol_id solo puede ser 1 admin o 2 gamer']);
                 return;
@@ -332,7 +334,52 @@ class UsuarioController
         }
     }
 
+    //Post /user/password/recover
+     // se envia una contraseña aleatoria para hacer la simulacion de recuperacion de contraseña
 
+     public function recoverPassword(){
+      
+    try {
+        $datos = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($datos['email']) || trim($datos['email']) === '') {
+            http_response_code(400);
+            echo json_encode(['error' => 'el campo email es obligatorio']);
+            return;
+        }
+
+        $email = trim($datos['email']);
+
+        $usuario = usuarioDAO::getUserByEmail($email);
+        if ($usuario !== null) {
+            
+            $caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $contrasenaNueva = '';
+            for ($i = 0; $i < 8; $i++) { 
+                $contrasenaNueva .= $caracteres[rand(0, strlen($caracteres) - 1)];
+            }
+            
+            
+            $usuario->setClave($contrasenaNueva);
+            usuarioDAO::updateById($usuario);
+            
+            
+            enviarCorreoRecuperacion($email, $contrasenaNueva);
+        }
+
+        
+        http_response_code(200);
+        echo json_encode([
+            'mensaje' => 'si el email está registrado, recibirás una nueva contraseña en el mismo' 
+        ]);
+
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'error al intentar cambiar la contraseña']);
+    }
+    
+
+    }
 
 
 
