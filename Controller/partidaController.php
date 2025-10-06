@@ -81,4 +81,29 @@ class PartidaController
             echo json_encode(['error' => 'error al crear la partida: '. $e->getMessage()]);
         }
     }
+
+    //get /gamer/games
+    // obtener todas las partidas abiertas del jugador
+    public function getGames(){
+        try {
+            $partidas = partidaDAO::getPartidasByUsuarioId($this->usuarioAutenticado->getId());
+            $partidasAbiertas = [];
+            foreach($partidas as $partida){
+                $partidasAbiertas[] = [
+                    'id' => $partida->getId(),
+                    'tablero' => $partida->getTablero(),
+                    'estado' => $partida->getEstado(),
+                    'heroes' => $partida->getHeroes(),
+                    'contador_casillas_destapadas' => $partida->getContadorCasillasDestapadas(),
+                    'contador_fallos_seguidos' => $partida->getContadorFallosSeguidos()
+                ];
+            }
+
+            http_response_code(200);
+            echo json_encode($partidasAbiertas);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al obtener la lista de partidas del usuario']);
+        }
+    }
 }
