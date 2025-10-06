@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/database.php';
 
-class partidaDAO{
+class PartidaDAO{
 
     public static function createPartida($partida){
         try {
