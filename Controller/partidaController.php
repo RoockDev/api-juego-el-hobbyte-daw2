@@ -1,4 +1,9 @@
 <?php
+
+require_once __DIR__ . '/../Models/Usuario.php';
+require_once __DIR__ . '/../Models/Partida.php';
+require_once __DIR__ . '/../DataBases/PartidaDAO.php';
+
 class PartidaController
 {
     private $usuarioAutenticado;
@@ -16,7 +21,7 @@ class PartidaController
             $datos = json_decode(file_get_contents('php://input'), true);
             //in_array l oque hace es buscar el valor especifico de un array, aqui mira si en tipo hay tipo estandat o personalizada 
             if (!isset($datos['tipo']) || !in_array($datos['tipo'], ['estandar', 'personalizada'])) {
-                http_response_code(404);
+                http_response_code(400);
                 echo json_encode(['error' => 'el campo "tipo" es obligatorio y debe ser "estandar" o "personalizada" ']);
                 return;
             }
@@ -26,7 +31,7 @@ class PartidaController
 
             if ($tipo === 'personalizada') {
                 if (!isset($datos['numCasillas'])) {
-                    http_response_code(404);
+                    http_response_code(400);
                     echo json_encode(['error' => 'el numero de casillas es obligatorio, si no no seria una partida personalizada']);
                     return;
                 }
@@ -121,7 +126,7 @@ class PartidaController
             }
 
             if ($partida->getUsuarioId() !== $this->usuarioAutenticado->getId()) {
-                http_response_code(404);
+                http_response_code(403);
                 echo json_encode(['error' => 'ese id de partida no corresponde con ninguna de tus partidas']);
                 return;
             }

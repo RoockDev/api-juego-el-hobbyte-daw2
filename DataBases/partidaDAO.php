@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/../Models/Partida.php';
 
 class PartidaDAO{
 
