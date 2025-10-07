@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/../Models/Rol.php';
 
 class RolDAO{
     public static function createRol($rol){

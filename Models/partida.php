@@ -103,7 +103,7 @@ class Partida
         $prueba = $this->tablero[$posicion]['prueba']; //aqui guardamos el tipo y el esfuerzo
         $exito = $this->resolverPrueba($prueba);
 
-        $this->tablero[$posicion]['destapda'] = true;
+        $this->tablero[$posicion]['destapada'] = true;
         $this->actualizarContadores($exito);
         $this->estadoPartida();
    
@@ -186,7 +186,7 @@ class Partida
             'estado' => $this->estado,
             'tablero' => $this->tablero,
             'heroes' => $this->heroes,
-            'contador_casillas_destapdas' => $this->contador_casillas_destapadas,
+            'contador_casillas_destapadas' => $this->contador_casillas_destapadas,
             'contador_fallos_seguidos' => $this->contador_fallos_seguidos, 
         ];
     }
