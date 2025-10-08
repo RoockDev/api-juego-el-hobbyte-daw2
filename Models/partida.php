@@ -28,26 +28,25 @@ class Partida
 
         for ($i = 0; $i < $numCasillas; $i++) {
             $tipo = $tipos[array_rand($tipos)];
+            
+            $rand = mt_rand(1, 100);
+
+            if ($rand <= 65) {
+                $esfuerzo = [5, 10, 15, 20][array_rand([5, 10, 15, 20])];
+            } elseif ($rand <= 95) {
+                $esfuerzo = [25, 30, 35, 40][array_rand([25, 30, 35, 40])];
+            } else {
+                $esfuerzo = [45, 50][array_rand([45, 50])];
+            }
+
+            $tablero[] = [
+                'prueba' => [
+                    'tipo' => $tipo,
+                    'esfuerzo' => $esfuerzo
+                ],
+                'destapada' => false,
+            ];
         }
-
-        $rand = mt_rand(1, 100);
-
-        if ($rand <= 65) {
-            $esfuerzo = [5, 10, 15, 20][array_rand([5, 10, 15, 20])];
-        } elseif ($rand <= 95) {
-            $esfuerzo = [25, 30, 35, 40][array_rand([25, 30, 35, 40])];
-        } else {
-            $esfuerzo = [45, 50][array_rand([45, 50])];
-        }
-
-        $tablero[] = [
-            'prueba' => [
-                'tipo' => $tipo,
-                'esfuerzo' => $esfuerzo
-            ],
-            'destapada' => false,
-
-        ];
 
         return $tablero;
     }
@@ -87,17 +86,31 @@ class Partida
 
     public function destaparCasilla($posicion)
     {
-        $posicion = $posicion - 1;
+         $posicion = $posicion - 1;
         if ($this->estado != "en curso") {
             throw new Exception("La partida ya ha finalizado");
         }
 
-        if ($posicion < 0 || $posicion > 19) {
-            throw new Exception("Posicion no valida, la posicion debe estar entre 1 y 20");
+        
+        if (!is_array($this->tablero) || empty($this->tablero)) {
+            throw new Exception("Error: el tablero de la partida no esta correctamente inicializado");
+        }
+
+        $numCasillas = count($this->tablero);
+        if ($posicion < 0 || $posicion >= $numCasillas) {
+            throw new Exception("Posicion no valida, la posicion debe estar entre 1 y " . $numCasillas);
+        }
+
+        if (!isset($this->tablero[$posicion]) || !isset($this->tablero[$posicion]['destapada'])) {
+            throw new Exception("La casilla en la posicion especificada no existe");
         }
 
         if ($this->tablero[$posicion]['destapada']) {
             throw new Exception("La casilla ya ha sido destapada");
+        }
+
+        if (!isset($this->tablero[$posicion]['prueba'])) {
+            throw new Exception("La casilla no tiene una prueba asociada");
         }
 
         $prueba = $this->tablero[$posicion]['prueba']; //aqui guardamos el tipo y el esfuerzo
@@ -162,7 +175,14 @@ class Partida
     private function estadoPartida(){
         $algunHeroeVivo = ($this->heroes['Gandalf'] > 0) || ($this->heroes['Thorin'] > 0) || ($this->heroes['Bilbo'] > 0);
 
-        $mitadCasillasDestapadas = ($this->contador_casillas_destapadas >= 10);
+        /**
+         * este bloque de aqui abajo lo tenia hecho de otra manera, pero solo funcionaba con la partida normal
+         * que por defecto tiene 20 casillas, si hacias una partida personalizada me partia el programa
+         * por eso lo he tenido que cambiar asi
+         */
+        $numCasillas = count($this->tablero);
+        $mitadCasillas = ($numCasillas / 2); 
+        $mitadCasillasDestapadas = ($this->contador_casillas_destapadas >= $mitadCasillas);
         $cincoFallos = ($this->contador_fallos_seguidos>= 5);
 
         if ($cincoFallos || !$algunHeroeVivo) {
@@ -172,7 +192,7 @@ class Partida
         }
     }
 
-    public function rendirse(){
+      public function rendirse(){
         if ($this->estado != 'en curso') {
             throw new Exception("Error la partida ya ha finalizado");
         }
