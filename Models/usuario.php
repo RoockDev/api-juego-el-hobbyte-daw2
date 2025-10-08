@@ -124,4 +124,11 @@ class Usuario{
         $this->rol_nombre = $rol_nombre;
         return $this;
     }
+
+    /**
+     * Verifica si la clave ingresada coincide con la clave del usuario
+     */
+    public function verificarClave($clave_ingresada) {
+        return $this->clave === $clave_ingresada;
+    }
 }
