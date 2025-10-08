@@ -4,28 +4,42 @@ require_once __DIR__ . '/Models/Usuario.php';
 require_once __DIR__ . '/Models/Partida.php';
 require_once __DIR__ . '/Models/Rol.php';
 
-require_once __DIR__ . '/DataBase/UsuarioDAO.php';
-require_once __DIR__ . '/DataBase/PartidaDAO.php';
-require_once __DIR__ . '/DataBase/RolDAO.php';
+require_once __DIR__ . '/DataBases/UsuarioDAO.php';
+require_once __DIR__ . '/DataBases/PartidaDAO.php';
+require_once __DIR__ . '/DataBases/RolDAO.php';
 
 require_once __DIR__ . '/Controller/UsuarioController.php';
 require_once __DIR__ . '/Controller/PartidaController.php';
 
 require_once __DIR__ . '/config/mail.php';
 
-$usuarioAutenticado = UsuarioDAO::getUserById(1);
-if (!$usuarioAutenticado) {
-    http_response_code(500);
-    echo json_encode(['error' => 'No se pudo cargar el usuario autenticado para pruebas']);
-    
-}else{
-    $metodo = $_SERVER['REQUEST_METHOD'];
-    $ruta = $_SERVER['REQUEST_URI'];
 
-    $parametros = explode("/", $ruta);
-    unset($parametros[0]);
-    //Rutas ADMIN
-    if (!empty($parametros[1]) && $parametros[1] === 'admin') {
+$datos = json_decode(file_get_contents('php://input'), true);
+
+// verificamos que luego no haya problemas
+if (!isset($datos['username']) || !isset($datos['password'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'no has introducido alguna credencial  debes enviar username y password en el body ']);
+} else {
+    $username = $datos['username'];
+    $password = $datos['password'];
+
+    // verificamos credenciales
+    try {
+        $usuarioAutenticado = UsuarioDAO::verificarUsuarioLogin($username, $password);
+        
+        if (!$usuarioAutenticado) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Credenciales incorrectas']);
+        } else {
+            
+            $metodo = $_SERVER['REQUEST_METHOD'];
+            $ruta = $_SERVER['REQUEST_URI'];
+
+            $parametros = explode("/", $ruta);
+            unset($parametros[0]);
+            //Rutas ADMIN
+            if (!empty($parametros[1]) && $parametros[1] === 'admin') {
         if ($usuarioAutenticado->getRolNombre() !== 'admin') {
             http_response_code(403);
             echo json_encode(['error' => 'Acceso denegado. solo los administradores pueden acceder a este recurso']);
@@ -112,6 +126,9 @@ if (!$usuarioAutenticado) {
         http_response_code(404);
         echo json_encode(['error' => 'ruta no encontrada']);
     }
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Error al verificar las credenciales: ' . $e->getMessage()]);
+    }
 }
-
-

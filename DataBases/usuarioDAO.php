@@ -41,7 +41,7 @@ class UsuarioDAO
     {
         try {
             $conexion = Database::connect();
-            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,r.nombre as rol_nombre
+            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,u.rol_id,r.nombre as rol_nombre
             FROM usuarios u
             JOIN roles r ON u.rol_id = r.id
             WHERE u.dni = ? ";
@@ -58,6 +58,7 @@ class UsuarioDAO
                 $usuario->setClave($fila['clave']);
                 $usuario->setEmail($fila['email']);
                 $usuario->setNombre($fila['nombre']);
+                $usuario->setRolId($fila['rol_id']);
                 $usuario->setRolNombre($fila['rol_nombre']);
             }
 
@@ -73,7 +74,7 @@ class UsuarioDAO
     {
         try {
             $conexion = Database::connect();
-            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,r.nombre as rol_nombre
+            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,u.rol_id,r.nombre as rol_nombre
             FROM usuarios u
             JOIN roles r ON u.rol_id = r.id
             WHERE u.email = ? ";
@@ -90,6 +91,7 @@ class UsuarioDAO
                 $usuario->setClave($fila['clave']);
                 $usuario->setEmail($fila['email']);
                 $usuario->setNombre($fila['nombre']);
+                $usuario->setRolId($fila['rol_id']);
                 $usuario->setRolNombre($fila['rol_nombre']);
             }
 
@@ -106,7 +108,7 @@ class UsuarioDAO
     {
         try {
             $conexion = Database::connect();
-            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,r.nombre as rol_nombre
+            $query = "SELECT u.id,u.dni,u.clave,u.email,u.nombre,u.rol_id,r.nombre as rol_nombre
             FROM usuarios u
             JOIN roles r ON u.rol_id = r.id
             WHERE u.id = ? ";
@@ -123,6 +125,7 @@ class UsuarioDAO
                 $usuario->setClave($fila['clave']);
                 $usuario->setEmail($fila['email']);
                 $usuario->setNombre($fila['nombre']);
+                $usuario->setRolId($fila['rol_id']);
                 $usuario->setRolNombre($fila['rol_nombre']);
             }
 
@@ -163,6 +166,9 @@ class UsuarioDAO
 
                 $usuarios[] = $usuario;
             }
+            
+            $stmt->close();
+            return $usuarios;
         } catch (Exception $e) {
             throw new Exception("Error al obtener todos los usuarios" . $e->getMessage());
         } finally {
@@ -219,19 +225,42 @@ class UsuarioDAO
         }
     }
 
-    public static function deleteUser($dni){
+    public static function deleteUser($id){
         try {
             $conexion = Database::connect();
-            $query = "DELETE FROM usuarios WHERE dni = ?";
+            $query = "DELETE FROM usuarios WHERE id = ?";
             $stmt = $conexion->prepare($query);
-            $stmt->bind_param("s",$dni);
+            $stmt->bind_param("i",$id);
             $ok = $stmt->execute();
             $stmt->close();
+            return $ok;
         } catch (Exception $e) {
             throw new Exception("Error al borrar usuarios".$e->getMessage());
             
         }finally{
             $conexion->close();
+        }
+    }
+
+   
+    public static function verificarUsuarioLogin($username, $clave) {
+        try {
+            // buscamos por dni primero
+            $usuario = self::getUserByDni($username);
+            
+            // si dni no va probamos con el correo
+            if (!$usuario) {
+                $usuario = self::getUserByEmail($username);
+            }
+            
+            
+            if ($usuario && $usuario->verificarClave($clave)) {
+                return $usuario;
+            }
+            
+            return null;
+        } catch (Exception $e) {
+            throw new Exception("Error al verificar usuario: " . $e->getMessage());
         }
     }
 }
