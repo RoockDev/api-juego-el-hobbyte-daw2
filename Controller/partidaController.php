@@ -54,7 +54,7 @@ class PartidaController
                 }
             }
 
-            if ($partidasEnCurso > 2) {
+            if ($partidasEnCurso >= 2) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Maximo dos partidas abiertas, termine una para poder crear otra']);
                 return;
@@ -155,7 +155,7 @@ class PartidaController
     public function openTile($gameId,$tilePosition){
         try {
             
-            if (!is_numeric($tilePosition) || $tilePosition > 1) {
+            if (!is_numeric($tilePosition) || $tilePosition < 1) {
                 http_response_code(400);
                 echo json_encode(['error' => 'la posicion de la casilla tiene que ser un numero y mayor que 0']);
                 return;
