@@ -8,18 +8,27 @@ class PartidaDAO{
     public static function createPartida($partida){
         try {
             $conexion = Database::connect();
-            $query = "INSERT INTO partidas (usuarioId,estado,tablero,heroes,contador_casillas_destapadas,
+            $query = "INSERT INTO partidas (usuario_id,estado,tablero,heroes,contador_casillas_destapadas,
             contador_fallos_seguidos) VALUES (?,?,?,?,?,?)";
             $stmt = $conexion->prepare($query);
 
             $usuarioId = $partida->getUsuarioId();
             $estado = $partida->getEstado();
-            $tablero = $partida->getTablero();
-            $heroes = $partida->getHeroes();
+            
+            // Convertir arrays a json para guardar en varchar si no luego lanzara warning en los endpoints
+            $tablero = json_encode($partida->getTablero());
+            $heroes = json_encode($partida->getHeroes());
+            
             $contadorCasillasDestapadas = $partida->getContadorCasillasDestapadas();
             $contadorFallosSeguidos = $partida->getContadorFallosSeguidos();
             $stmt->bind_param('isssii',$usuarioId,$estado,$tablero,$heroes,$contadorCasillasDestapadas,$contadorFallosSeguidos);
             $ok = $stmt->execute();
+            
+            // coger el id por que lo necesitaremos para los endpoints
+            if ($ok) {
+                $partida->setId($conexion->insert_id);
+            }
+            
             $stmt->close();
             return $ok;
         } catch (Exception $e) {
@@ -43,10 +52,13 @@ class PartidaDAO{
             if ($fila = $resultado->fetch_assoc()) {
                 $partida = new Partida();
                 $partida ->setId($fila['id']);
-                $partida ->setUsuarioId($fila['usuarioId']);
+                $partida ->setUsuarioId($fila['usuario_id']);
                 $partida->setEstado($fila['estado']);
-                $partida->setTablero($fila['tablero']);
-                $partida->setHeroes($fila['heroes']);
+                
+              
+                $partida->setTablero(json_decode($fila['tablero'], true));
+                $partida->setHeroes(json_decode($fila['heroes'], true));
+                
                 $partida->setContadorCasillasDestapadas($fila['contador_casillas_destapadas']);
                 $partida->setContadorFallosSeguidos($fila['contador_fallos_seguidos']);
             }
@@ -64,7 +76,7 @@ class PartidaDAO{
     public static function getPartidasByUsuarioId($usuarioId){
         try {
             $conexion = Database::connect();
-            $query = "SELECT * FROM partidas WHERE usuarioId = ?";
+            $query = "SELECT * FROM partidas WHERE usuario_id = ?";
             $stmt = $conexion->prepare($query);
             $stmt->bind_param("i",$usuarioId);
             $stmt->execute();
@@ -74,7 +86,7 @@ class PartidaDAO{
             while ($fila = $resultado->fetch_assoc()) {
                  $partida = new Partida();
                 $partida ->setId($fila['id']);
-                $partida ->setUsuarioId($fila['usuarioId']);
+                $partida ->setUsuarioId($fila['usuario_id']);
                 $partida->setEstado($fila['estado']);
                 $partida->setTablero($fila['tablero']);
                 $partida->setHeroes($fila['heroes']);
@@ -97,12 +109,15 @@ class PartidaDAO{
     public static function updatePartida($partida){
         try {
             $conexion = Database::connect();
-            $query = "UPDATE partidas SET usuarioId = ?, estado = ?, tablero = ?, heroes = ?, contador_casillas_destapadas = ?, contador_fallos_seguidos = ? WHERE id = ?";
+            $query = "UPDATE partidas SET usuario_id = ?, estado = ?, tablero = ?, heroes = ?, contador_casillas_destapadas = ?, contador_fallos_seguidos = ? WHERE id = ?";
            $stmt = $conexion->prepare($query);
             $usuarioId = $partida->getUsuarioId();
             $estado = $partida->getEstado();
-            $tablero = $partida->getTablero();
-            $heroes = $partida->getHeroes();
+            
+            // al actualizar también convertimos a json por que si no luego va a dar warnings
+            $tablero = json_encode($partida->getTablero());
+            $heroes = json_encode($partida->getHeroes());
+            
             $contadorCasillasDestapadas = $partida->getContadorCasillasDestapadas();
             $contadorFallosSeguidos = $partida->getContadorFallosSeguidos();
             $id = $partida->getId();
@@ -153,7 +168,7 @@ class PartidaDAO{
              while ($fila = $resultado->fetch_assoc()) {
                 $partida = new Partida();
                 $partida->setId($fila['id']);
-                $partida->setUsuarioId($fila['usuarioId']);
+                $partida->setUsuarioId($fila['usuario_id']);
                 $partida->setEstado($fila['estado']);
                 $partida->setTablero($fila['tablero']);
                 $partida->setHeroes($fila['heroes']);
