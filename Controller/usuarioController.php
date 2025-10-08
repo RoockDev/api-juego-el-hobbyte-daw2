@@ -1,8 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../Models/Usuario.php';
-require_once __DIR__ . '/../DataBase/UsuarioDAO.php';
-require_once __DIR__ . '/../DataBase/PartidaDAO.php';
+require_once __DIR__ . '/../DataBases/UsuarioDAO.php';
+require_once __DIR__ . '/../DataBases/PartidaDAO.php';
 require_once __DIR__ . '/../config/mail.php';
 
 class UsuarioController
@@ -17,7 +17,7 @@ class UsuarioController
 
     private function verify()
     {
-       
+
 
         if ($this->usuarioAutenticado->getRolNombre() !== 'admin') {
             http_response_code(403);
@@ -33,7 +33,7 @@ class UsuarioController
     {
 
 
-        if(!$this->verify()){
+        if (!$this->verify()) {
             return;
         }
 
@@ -71,7 +71,7 @@ class UsuarioController
 
     public function getUserById($id)
     {
-        if(!$this->verify()){
+        if (!$this->verify()) {
             return;
         }
 
@@ -103,7 +103,7 @@ class UsuarioController
     //Crear un nuevo usuario (solo disponible para los administradores)
     public function createUser()
     {
-        if(!$this->verify()){
+        if (!$this->verify()) {
             return;
         }
 
@@ -171,7 +171,7 @@ class UsuarioController
     public function updateUser($id)
     {
 
-        if(!$this->verify()){
+        if (!$this->verify()) {
             return;
         }
 
@@ -214,18 +214,45 @@ class UsuarioController
                 }
             }
 
-            /**
-             * se que este bloque de aqui debajo no es eficiente por que 
-             * en caso de que alguna variable no se haya cambiado por x o por y
-             * seria la misma que tenia y aqui la estariamos cambiando a la misma que tiene ya,
-             * ahora mismo no se me ocurre otra cosa mejor, se intentará mejorar
-             * 
-             */
-            $usuarioActual->setDni($nuevoDni);
-            $usuarioActual->setEmail($nuevoEmail);
-            $usuarioActual->setNombre($nuevoNombre);
-            $usuarioActual->setClave($nuevaClave);
-            $usuarioActual->setRolId($nuevoRolId);
+            $camposModificados = [];
+
+            if ($nuevoDni !== $usuarioActual->getDni()) {
+                $camposModificados['dni'] = $nuevoDni;
+                $usuarioActual->setDni($nuevoDni);
+            }
+
+            if ($nuevoEmail !== $usuarioActual->getEmail()) {
+                $camposModificados['email'] = $nuevoEmail;
+                $usuarioActual->setEmail($nuevoEmail);
+            }
+
+            if ($nuevoNombre !== $usuarioActual->getNombre()) {
+                $camposModificados['nombre'] = $nuevoNombre;
+                $usuarioActual->setNombre($nuevoNombre);
+            }
+
+            if ($nuevaClave !== $usuarioActual->getClave()) {
+                $camposModificados['clave'] = $nuevaClave;
+                $usuarioActual->setClave($nuevaClave);
+            }
+
+            if ($nuevoRolId !== $usuarioActual->getRolId()) {
+                $camposModificados['rol_id'] = $nuevoRolId;
+                $usuarioActual->setRolId($nuevoRolId);
+            }
+
+            
+            if (empty($camposModificados)) {
+                http_response_code(200);
+                echo json_encode([
+                    'mensaje' => 'los datos introducidos eran los mismos por lo tanto no se actualizan',
+                    'id' => $usuarioActual->getId(),
+                    'dni' => $usuarioActual->getDni(),
+                    'nombre' => $usuarioActual->getNombre()
+                ]);
+                return;
+            }
+
 
             $exito = UsuarioDAO::updateById($usuarioActual);
 
@@ -247,7 +274,7 @@ class UsuarioController
     public function delete($id)
     {
 
-        if(!$this->verify()){
+        if (!$this->verify()) {
             return;
         }
 
@@ -275,15 +302,16 @@ class UsuarioController
         }
     }
 
-    
+
     /**
      * ahora vamos con los metodos correspondientes al usuario general tanto admin como gamer
      * por lo tanto en los siguientes metodos no hara falta llamar a verify
      */
     //Get /user/me 
     // obtener los datos personales del usuario autenticado (disponible para todos los usuarios)
-    
-    public function getMe(){
+
+    public function getMe()
+    {
         try {
             http_response_code(200);
             echo json_encode([
@@ -297,12 +325,12 @@ class UsuarioController
             http_response_code(500);
             echo json_encode(['error' => 'error interno del servidor no puedes acceder a tus datos']);
         }
-        
     }
 
     //Get /user/statistics
     //obtiener estadisticas del usuario autenticado
-    public function getStatistics(){
+    public function getStatistics()
+    {
         try {
             $partidas = PartidaDAO::getPartidasByUsuarioId($this->usuarioAutenticado->getId());
 
@@ -310,12 +338,12 @@ class UsuarioController
             $perdidas = 0;
             $rendidas = 0;
 
-            foreach($partidas as $partida){
+            foreach ($partidas as $partida) {
                 if ($partida->getEstado() === 'ganada') {
-                    $ganadas ++;
-                }else if($partida->getEstado() === 'perdida'){
+                    $ganadas++;
+                } else if ($partida->getEstado() === 'perdida') {
                     $perdidas++;
-                }else if($partida->getEstado() === 'rendido'){
+                } else if ($partida->getEstado() === 'rendido') {
                     $rendidas++;
                 }
             }
@@ -335,54 +363,47 @@ class UsuarioController
     }
 
     //Post /user/password/recover
-     // se envia una contraseña aleatoria para hacer la simulacion de recuperacion de contraseña
+    // se envia una contraseña aleatoria para hacer la simulacion de recuperacion de contraseña
 
-     public function recoverPassword(){
-      
-    try {
-        $datos = json_decode(file_get_contents('php://input'), true);
+    public function recoverPassword()
+    {
 
-        if (!isset($datos['email']) || trim($datos['email']) === '') {
-            http_response_code(400);
-            echo json_encode(['error' => 'el campo email es obligatorio']);
-            return;
-        }
+        try {
+            $datos = json_decode(file_get_contents('php://input'), true);
 
-        $email = trim($datos['email']);
-
-        $usuario = UsuarioDAO::getUserByEmail($email);
-        if ($usuario !== null) {
-            
-            $caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $contrasenaNueva = '';
-            for ($i = 0; $i < 8; $i++) { 
-                $contrasenaNueva .= $caracteres[rand(0, strlen($caracteres) - 1)];
+            if (!isset($datos['email']) || trim($datos['email']) === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'el campo email es obligatorio']);
+                return;
             }
-            
-            
-            $usuario->setClave($contrasenaNueva);
-            UsuarioDAO::updateById($usuario);
-            
-            
-            enviarCorreoRecuperacion($email, $contrasenaNueva);
+
+            $email = trim($datos['email']);
+
+            $usuario = UsuarioDAO::getUserByEmail($email);
+            if ($usuario !== null) {
+
+                $caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                $contrasenaNueva = '';
+                for ($i = 0; $i < 8; $i++) {
+                    $contrasenaNueva .= $caracteres[rand(0, strlen($caracteres) - 1)];
+                }
+
+
+                $usuario->setClave($contrasenaNueva);
+                UsuarioDAO::updateById($usuario);
+
+
+                enviarCorreoRecuperacion($email, $contrasenaNueva);
+            }
+
+
+            http_response_code(200);
+            echo json_encode([
+                'mensaje' => 'si el email está registrado, recibirás una nueva contraseña en el mismo'
+            ]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'error al intentar cambiar la contraseña']);
         }
-
-        
-        http_response_code(200);
-        echo json_encode([
-            'mensaje' => 'si el email está registrado, recibirás una nueva contraseña en el mismo' 
-        ]);
-
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'error al intentar cambiar la contraseña']);
     }
-    
-
-    }
-
-
-
-
-
 }
